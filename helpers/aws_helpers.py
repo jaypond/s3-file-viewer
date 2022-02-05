@@ -9,11 +9,11 @@ class S3Helpers():
         )
         self.bucket = bucket
 
-    def get_object_body(key: str):
+    def get_object_body(self, key: str):
         """
         Retrieve the body of an object using the key.
         """
-        obj = s3_client.get_object(
+        obj = self.client.get_object(
             Bucket=self.bucket,
             Key=key
         )

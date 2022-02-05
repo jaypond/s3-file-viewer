@@ -1,12 +1,11 @@
 import datetime
+
 from enum import Enum
+from loguru import logger
 
-from fastapi import FastAPI
-from helpers.s3_helpers import S3Helpers
+from fastapi import FastAPI, Depends
+from dependencies import get_s3_client
 
-AWS_ACCESS_KEY_ID = 'AKIAYHXUYJPF6UOA5PMZ'
-AWS_SECRET_ACCESS_KEY = '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'
-BUCKET = 'finance-risk-reporting-files'
 
 """
 TODO:
@@ -15,17 +14,21 @@ Separate functions and routes to different files
 Load configuration from separate file
 """
 
-class ModelName(str, Enum):
+class VortexZones(str, Enum):
     """Zone enum for validation"""
     ams = "ams"
     nyc = "nyc"
     sng = "sng"
 
+class FinanceZones(str, Enum):
+    """Zone enum for validation"""
+    aml = "aml"
+    nyq = "nyq"
+    sgl = "sgl"
+
 
 app = FastAPI()
-s3_client = S3Helpers(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, BUCKET)
 
-##########ROUTES
 
 @app.get("/")
 async def root():
@@ -33,7 +36,13 @@ async def root():
 
 
 @app.get("/vortex/{zone}/{file_date}")
-async def read_vortex_file(zone: ModelName, file_date: str):
+async def read_vortex_file(zone: VortexZones, file_date: str, s3_client=Depends(get_s3_client)):
     key = f"vortex-{zone}-{file_date}.txt"
-    body = s3_client.get_object_body()
+    body = s3_client.get_object_body(key)
+    return body
+
+@app.get("/finance/{zone}/{file_date}")
+async def read_finance_file(zone: FinanceZones, file_date: str, s3_client=Depends(get_s3_client)):
+    key = f"finance-{zone}-{file_date}.txt"
+    body = s3_client.get_object_body(key)
     return body
